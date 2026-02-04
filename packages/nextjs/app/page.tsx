@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
 import { formatEther, parseEther } from "viem";
@@ -493,35 +493,83 @@ function IdeasList({
   hasStakeAllowance: boolean;
   isAnyMining: boolean;
 }) {
+  // Collect sort data from each IdeaCard as it loads
+  const [ideaSortData, setIdeaSortData] = useState<
+    Record<number, { totalStaked: bigint; isBurned: boolean; isBuilt: boolean }>
+  >({});
+
+  const handleIdeaDataLoaded = useCallback(
+    (id: number, data: { totalStaked: bigint; isBurned: boolean; isBuilt: boolean }) => {
+      setIdeaSortData(prev => {
+        const existing = prev[id];
+        // Only update if data actually changed to avoid infinite re-renders
+        if (
+          existing &&
+          existing.totalStaked === data.totalStaked &&
+          existing.isBurned === data.isBurned &&
+          existing.isBuilt === data.isBuilt
+        ) {
+          return prev;
+        }
+        return { ...prev, [id]: data };
+      });
+    },
+    [],
+  );
+
+  // Sort idea IDs: active (by totalStaked desc) → built (by totalStaked desc) → burned
+  const sortedIds = useMemo(() => {
+    const ids = Array.from({ length: totalIdeas }, (_, i) => i + 1);
+    return ids.sort((a, b) => {
+      const dataA = ideaSortData[a];
+      const dataB = ideaSortData[b];
+      // If data not loaded yet, keep original order
+      if (!dataA && !dataB) return 0;
+      if (!dataA) return 1;
+      if (!dataB) return -1;
+      // Burned always at bottom
+      if (dataA.isBurned && !dataB.isBurned) return 1;
+      if (!dataA.isBurned && dataB.isBurned) return -1;
+      if (dataA.isBurned && dataB.isBurned) return 0;
+      // Built after active
+      if (dataA.isBuilt && !dataB.isBuilt) return 1;
+      if (!dataA.isBuilt && dataB.isBuilt) return -1;
+      // Sort by totalStaked descending
+      if (dataA.totalStaked > dataB.totalStaked) return -1;
+      if (dataA.totalStaked < dataB.totalStaked) return 1;
+      return 0;
+    });
+  }, [ideaSortData, totalIdeas]);
+
   if (totalIdeas === 0) return null;
 
-  const ideaCards = [];
-  for (let i = 1; i <= totalIdeas; i++) {
-    ideaCards.push(
-      <IdeaCard
-        key={i}
-        ideaId={i}
-        connectedAddress={connectedAddress}
-        isAdmin={isAdmin}
-        onStake={onStake}
-        onApproveStake={onApproveStake}
-        onMarkBuilt={onMarkBuilt}
-        onBurn={onBurn}
-        onClaim={onClaim}
-        isStaking={stakingIdeaId === i}
-        isApprovingStake={approvingStakeIdeaId === i}
-        isMarkingBuilt={markingBuiltId === i}
-        isBurning={burningId === i}
-        isClaiming={claimingId === i}
-        payoutAmount={payoutAmounts[i] || ""}
-        setPayoutAmount={val => setPayoutAmounts({ ...payoutAmounts, [i]: val })}
-        hasStakeAllowance={hasStakeAllowance}
-        isAnyMining={isAnyMining}
-      />,
-    );
-  }
-
-  return <div className="space-y-4">{ideaCards}</div>;
+  return (
+    <div className="space-y-4">
+      {sortedIds.map(i => (
+        <IdeaCard
+          key={i}
+          ideaId={i}
+          connectedAddress={connectedAddress}
+          isAdmin={isAdmin}
+          onStake={onStake}
+          onApproveStake={onApproveStake}
+          onMarkBuilt={onMarkBuilt}
+          onBurn={onBurn}
+          onClaim={onClaim}
+          isStaking={stakingIdeaId === i}
+          isApprovingStake={approvingStakeIdeaId === i}
+          isMarkingBuilt={markingBuiltId === i}
+          isBurning={burningId === i}
+          isClaiming={claimingId === i}
+          payoutAmount={payoutAmounts[i] || ""}
+          setPayoutAmount={val => setPayoutAmounts({ ...payoutAmounts, [i]: val })}
+          hasStakeAllowance={hasStakeAllowance}
+          isAnyMining={isAnyMining}
+          onDataLoaded={handleIdeaDataLoaded}
+        />
+      ))}
+    </div>
+  );
 }
 
 // Individual idea card - Specimen Card Style
@@ -543,6 +591,7 @@ function IdeaCard({
   setPayoutAmount,
   hasStakeAllowance,
   isAnyMining,
+  onDataLoaded,
 }: {
   ideaId: number;
   connectedAddress: string | undefined;
@@ -561,6 +610,7 @@ function IdeaCard({
   setPayoutAmount: (val: string) => void;
   hasStakeAllowance: boolean;
   isAnyMining: boolean;
+  onDataLoaded?: (id: number, data: { totalStaked: bigint; isBurned: boolean; isBuilt: boolean }) => void;
 }) {
   // Read idea data
   const { data: ideaData } = useScaffoldReadContract({
@@ -589,6 +639,18 @@ function IdeaCard({
     functionName: "getClaimableAmount",
     args: [BigInt(ideaId), connectedAddress as `0x${string}`],
   });
+
+  // Report sort data to parent for sorting
+  useEffect(() => {
+    if (ideaData && onDataLoaded) {
+      const idea = ideaData as Idea;
+      onDataLoaded(ideaId, {
+        totalStaked: idea.totalStaked,
+        isBurned: idea.isBurned,
+        isBuilt: idea.isBuilt,
+      });
+    }
+  }, [ideaData, ideaId, onDataLoaded]);
 
   if (!ideaData) {
     return (
