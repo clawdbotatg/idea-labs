@@ -1,10 +1,10 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "@scaffold-ui/components/styles.css";
+import type { Metadata } from "next";
 import { ClientProviders } from "~~/components/ClientProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
-import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,11 +18,21 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata = getMetadata({
-  title: "$CLAWDlabs 🦞 Community-Powered Research",
-  description:
-    "Submit experimental proposals and stake $CLAWD tokens to fund research. Top ideas get built by the lab!",
-});
+export const metadata: Metadata = {
+  title: "$CLAWDlabs",
+  description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
+  openGraph: {
+    title: "$CLAWDlabs — Community-Powered Research",
+    description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
+    images: ["/clawd-scientist.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "$CLAWDlabs — Community-Powered Research",
+    description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
+    images: ["/clawd-scientist.jpg"],
+  },
+};
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (

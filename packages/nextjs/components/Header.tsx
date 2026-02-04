@@ -48,7 +48,7 @@ export const HeaderMenuLinks = () => {
 };
 
 /**
- * Idea Labs Header - Science Lab Theme
+ * $CLAWDlabs Header - Science Lab Theme
  */
 export const Header = () => {
   const { targetNetwork } = useTargetNetwork();

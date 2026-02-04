@@ -4,50 +4,16 @@ import { useEffect, useState } from "react";
 import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
 import { formatEther, parseEther } from "viem";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount } from "wagmi";
 import { useDeployedContractInfo, useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
 // Admin address
 const ADMIN = "0x11ce532845cE0eAcdA41f72FDc1C88c335981442";
 
-// CLAWD token address on Base
-const CLAWD_TOKEN = "0x9f86dB9fc6f7c9408e8Fda3Ff8ce4e78ac7a6b07" as const;
-
 // Costs in CLAWD
 const SUBMIT_COST = parseEther("10");
 const STAKE_COST = parseEther("25");
-
-// ERC20 ABI for approve/allowance
-const ERC20_ABI = [
-  {
-    inputs: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-    ],
-    name: "allowance",
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    name: "approve",
-    outputs: [{ type: "bool" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "account", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
 
 interface Idea {
   id: bigint;
@@ -65,7 +31,7 @@ const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const isAdmin = connectedAddress?.toLowerCase() === ADMIN.toLowerCase();
 
-  // Get deployed IdeaLabs contract address
+  // Get deployed $CLAWDlabs contract address
   const { data: ideaLabsInfo } = useDeployedContractInfo("IdeaLabs");
   const ideaLabsAddress = ideaLabsInfo?.address;
 
@@ -102,36 +68,41 @@ const Home: NextPage = () => {
   });
 
   // Read CLAWD balance
-  const { data: clawdBalance, refetch: refetchBalance } = useReadContract({
-    address: CLAWD_TOKEN,
-    abi: ERC20_ABI,
+  const { data: clawdBalance, refetch: refetchBalance } = useScaffoldReadContract({
+    contractName: "CLAWD",
     functionName: "balanceOf",
-    args: connectedAddress ? [connectedAddress] : undefined,
+    args: [connectedAddress],
+    query: { enabled: !!connectedAddress },
   });
 
   // Read allowance
-  const { data: submitAllowance, refetch: refetchSubmitAllowance } = useReadContract({
-    address: CLAWD_TOKEN,
-    abi: ERC20_ABI,
+  const { data: submitAllowance, refetch: refetchSubmitAllowance } = useScaffoldReadContract({
+    contractName: "CLAWD",
     functionName: "allowance",
-    args: connectedAddress && ideaLabsAddress ? [connectedAddress, ideaLabsAddress] : undefined,
+    args: [connectedAddress, ideaLabsAddress],
+    query: { enabled: !!connectedAddress && !!ideaLabsAddress },
   });
 
   const hasSubmitAllowance = submitAllowance && submitAllowance >= SUBMIT_COST;
   const hasStakeAllowance = submitAllowance && submitAllowance >= STAKE_COST;
 
-  // Contract writes
-  const { writeContractAsync: writeIdeaLabs } = useScaffoldWriteContract("IdeaLabs");
-  const { writeContractAsync: writeERC20 } = useWriteContract();
+  // Contract writes — use object syntax (non-deprecated) and extract isMining for defense-in-depth
+  const { writeContractAsync: writeIdeaLabs, isMining: isIdeaLabsMining } = useScaffoldWriteContract({
+    contractName: "IdeaLabs",
+  });
+  const { writeContractAsync: writeCLAWD, isMining: isCLAWDMining } = useScaffoldWriteContract({
+    contractName: "CLAWD",
+  });
+
+  // Global mining flag — ANY tx in progress means all write buttons should be disabled
+  const isAnyMining = isIdeaLabsMining || isCLAWDMining;
 
   // Approve CLAWD for submit
   const handleApproveForSubmit = async () => {
     if (!connectedAddress || !ideaLabsAddress) return;
     setIsApprovingSubmit(true);
     try {
-      await writeERC20({
-        address: CLAWD_TOKEN,
-        abi: ERC20_ABI,
+      await writeCLAWD({
         functionName: "approve",
         args: [ideaLabsAddress, SUBMIT_COST],
       });
@@ -150,9 +121,7 @@ const Home: NextPage = () => {
     if (!connectedAddress || !ideaLabsAddress) return;
     setApprovingStakeIdeaId(ideaId);
     try {
-      await writeERC20({
-        address: CLAWD_TOKEN,
-        abi: ERC20_ABI,
+      await writeCLAWD({
         functionName: "approve",
         args: [ideaLabsAddress, STAKE_COST],
       });
@@ -319,8 +288,8 @@ const Home: NextPage = () => {
               </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              <span className="text-primary">Idea</span>
-              <span className="text-secondary">Labs</span>
+              <span className="text-primary">$CLAWD</span>
+              <span className="text-secondary">labs</span>
             </h1>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-base-content/50">
               Experimental Research Division
@@ -370,7 +339,7 @@ const Home: NextPage = () => {
               value={ideaContent}
               onChange={e => setIdeaContent(e.target.value)}
               maxLength={2000}
-              disabled={isSubmitting || isApprovingSubmit}
+              disabled={isSubmitting || isApprovingSubmit || isAnyMining}
             />
 
             <div className="flex justify-between items-center">
@@ -379,7 +348,11 @@ const Home: NextPage = () => {
               {!connectedAddress ? (
                 <p className="font-mono text-xs uppercase tracking-wider text-error">Connect wallet to submit</p>
               ) : !hasSubmitAllowance ? (
-                <button className="btn btn-secondary" onClick={handleApproveForSubmit} disabled={isApprovingSubmit}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleApproveForSubmit}
+                  disabled={isApprovingSubmit || isAnyMining}
+                >
                   {isApprovingSubmit ? (
                     <>
                       <span className="loading loading-spinner loading-sm"></span>
@@ -393,7 +366,7 @@ const Home: NextPage = () => {
                 <button
                   className="btn btn-primary"
                   onClick={handleSubmitIdea}
-                  disabled={isSubmitting || !ideaContent.trim()}
+                  disabled={isSubmitting || !ideaContent.trim() || isAnyMining}
                 >
                   {isSubmitting ? (
                     <>
@@ -460,6 +433,7 @@ const Home: NextPage = () => {
           payoutAmounts={payoutAmounts}
           setPayoutAmounts={setPayoutAmounts}
           hasStakeAllowance={!!hasStakeAllowance}
+          isAnyMining={isAnyMining}
         />
 
         {(!totalIdeas || totalIdeas === 0n) && (
@@ -499,6 +473,7 @@ function IdeasList({
   payoutAmounts,
   setPayoutAmounts,
   hasStakeAllowance,
+  isAnyMining,
 }: {
   totalIdeas: number;
   connectedAddress: string | undefined;
@@ -516,6 +491,7 @@ function IdeasList({
   payoutAmounts: Record<number, string>;
   setPayoutAmounts: (val: Record<number, string>) => void;
   hasStakeAllowance: boolean;
+  isAnyMining: boolean;
 }) {
   if (totalIdeas === 0) return null;
 
@@ -540,6 +516,7 @@ function IdeasList({
         payoutAmount={payoutAmounts[i] || ""}
         setPayoutAmount={val => setPayoutAmounts({ ...payoutAmounts, [i]: val })}
         hasStakeAllowance={hasStakeAllowance}
+        isAnyMining={isAnyMining}
       />,
     );
   }
@@ -565,6 +542,7 @@ function IdeaCard({
   payoutAmount,
   setPayoutAmount,
   hasStakeAllowance,
+  isAnyMining,
 }: {
   ideaId: number;
   connectedAddress: string | undefined;
@@ -582,6 +560,7 @@ function IdeaCard({
   payoutAmount: string;
   setPayoutAmount: (val: string) => void;
   hasStakeAllowance: boolean;
+  isAnyMining: boolean;
 }) {
   // Read idea data
   const { data: ideaData } = useScaffoldReadContract({
@@ -701,23 +680,27 @@ function IdeaCard({
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => onApproveStake(ideaId)}
-                disabled={isApprovingStake}
+                disabled={isApprovingStake || isAnyMining}
               >
-                {isApprovingStake ? (
+                {isApprovingStake || isAnyMining ? (
                   <>
                     <span className="loading loading-spinner loading-xs"></span>
-                    Approving...
+                    {isApprovingStake ? "Approving..." : "Processing..."}
                   </>
                 ) : (
                   "🔓 Approve 25 CLAWD"
                 )}
               </button>
             ) : (
-              <button className="btn btn-primary btn-sm" onClick={() => onStake(ideaId)} disabled={isStaking}>
-                {isStaking ? (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => onStake(ideaId)}
+                disabled={isStaking || isAnyMining}
+              >
+                {isStaking || isAnyMining ? (
                   <>
                     <span className="loading loading-spinner loading-xs"></span>
-                    Funding...
+                    {isStaking ? "Funding..." : "Processing..."}
                   </>
                 ) : (
                   "💰 Fund Research (25 CLAWD)"
@@ -734,11 +717,15 @@ function IdeaCard({
 
           {/* Claim button */}
           {idea.isBuilt && canClaim && (
-            <button className="btn btn-success btn-sm" onClick={() => onClaim(ideaId)} disabled={isClaiming}>
-              {isClaiming ? (
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => onClaim(ideaId)}
+              disabled={isClaiming || isAnyMining}
+            >
+              {isClaiming || isAnyMining ? (
                 <>
                   <span className="loading loading-spinner loading-xs"></span>
-                  Claiming...
+                  {isClaiming ? "Claiming..." : "Processing..."}
                 </>
               ) : (
                 `🎁 Claim ${claimableAmount ? formatEther(claimableAmount) : "0"} CLAWD`
@@ -756,14 +743,14 @@ function IdeaCard({
                   placeholder="Payout"
                   value={payoutAmount}
                   onChange={e => setPayoutAmount(e.target.value)}
-                  disabled={isMarkingBuilt}
+                  disabled={isMarkingBuilt || isAnyMining}
                 />
                 <button
                   className="btn btn-success btn-sm"
                   onClick={() => onMarkBuilt(ideaId)}
-                  disabled={isMarkingBuilt}
+                  disabled={isMarkingBuilt || isAnyMining}
                 >
-                  {isMarkingBuilt ? (
+                  {isMarkingBuilt || isAnyMining ? (
                     <>
                       <span className="loading loading-spinner loading-xs"></span>
                     </>
@@ -771,8 +758,12 @@ function IdeaCard({
                     "✓ Complete"
                   )}
                 </button>
-                <button className="btn btn-error btn-sm" onClick={() => onBurn(ideaId)} disabled={isBurning}>
-                  {isBurning ? (
+                <button
+                  className="btn btn-error btn-sm"
+                  onClick={() => onBurn(ideaId)}
+                  disabled={isBurning || isAnyMining}
+                >
+                  {isBurning || isAnyMining ? (
                     <>
                       <span className="loading loading-spinner loading-xs"></span>
                     </>
