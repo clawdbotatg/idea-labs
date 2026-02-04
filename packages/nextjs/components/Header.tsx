@@ -80,8 +80,8 @@ export const Header = () => {
           <div className="text-3xl lobster-glow group-hover:scale-110 transition-transform">🦞</div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight text-xl tracking-tight">
-              <span className="text-primary">Idea</span>
-              <span className="text-secondary">Labs</span>
+              <span className="text-primary">$CLAWD</span>
+              <span className="text-secondary">labs</span>
             </span>
             <span className="text-[10px] font-mono uppercase tracking-widest text-base-content/50">
               Research Division • $CLAWD
@@ -92,8 +92,8 @@ export const Header = () => {
         <Link href="/" passHref className="flex lg:hidden items-center gap-2 ml-2">
           <span className="text-2xl">🦞</span>
           <span className="font-bold text-lg">
-            <span className="text-primary">Idea</span>
-            <span className="text-secondary">Labs</span>
+            <span className="text-primary">$CLAWD</span>
+            <span className="text-secondary">labs</span>
           </span>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">

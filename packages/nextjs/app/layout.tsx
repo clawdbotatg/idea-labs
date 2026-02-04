@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = getMetadata({
-  title: "Idea Labs 🦞 $CLAWD-Powered Research",
+  title: "$CLAWDlabs 🦞 Community-Powered Research",
   description:
     "Submit experimental proposals and stake $CLAWD tokens to fund research. Top ideas get built by the lab!",
 });
