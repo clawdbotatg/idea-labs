@@ -301,7 +301,23 @@ const Home: NextPage = () => {
         {/* Lab Header */}
         <div className="text-center mb-8">
           <div className="inline-block">
-            <span className="text-6xl mb-4 block lobster-glow">🦞</span>
+            {/* Clawd Scientist Mascot */}
+            <div className="mb-4 flex justify-center">
+              <div className="relative">
+                <img
+                  src="/clawd-scientist.jpg"
+                  alt="Clawd the Lab Scientist"
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-primary shadow-lg object-cover"
+                  style={{
+                    boxShadow: "0 0 20px rgba(13, 148, 136, 0.4), 0 8px 32px rgba(0,0,0,0.2)",
+                  }}
+                />
+                {/* Bubbling beaker glow effect */}
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-success/80 rounded-full animate-pulse flex items-center justify-center text-lg">
+                  🧪
+                </div>
+              </div>
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               <span className="text-primary">Idea</span>
               <span className="text-secondary">Labs</span>
@@ -457,7 +473,7 @@ const Home: NextPage = () => {
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="font-mono text-xs text-base-content/30 uppercase tracking-wider">
-            🦞 A Clawd Labs Production • Built by an AI, totally unaudited
+            🔬 A Clawd Labs Production • Built by an AI, totally unaudited
           </p>
         </div>
       </div>
