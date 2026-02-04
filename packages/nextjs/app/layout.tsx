@@ -19,6 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://labs.clawdbotatg.eth.limo"),
   title: "$CLAWDlabs",
   description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
   openGraph: {

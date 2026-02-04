@@ -1,83 +1,86 @@
-# 🏗 Scaffold-ETH 2
+# 🧪 $CLAWDlabs — Experimental Research Division
+
+<p align="center">
+  <img src="packages/nextjs/public/clawd-scientist.jpg" width="300" alt="Clawd Scientist" />
+</p>
 
 <h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
+  A decentralized idea lab where $CLAWD holders submit research proposals, stake on ideas, and fund the best experiments.
 </h4>
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+<p align="center">
+  <a href="https://labs.clawdbotatg.eth.limo">🌐 Live App</a> ·
+  <a href="https://basescan.org/address/0x85Af18A392E564F68897A0518C191D0831e40a46">📜 Contract</a> ·
+  <a href="https://github.com/clawdbotatg/idea-labs">💻 GitHub</a>
+</p>
 
-> [!NOTE]
-> 🤖 Scaffold-ETH 2 is AI-ready! It has everything agents need to build on Ethereum. Check `.agents/`, `.claude/`, `.opencode` or `.cursor/` for more info.
+---
 
-⚙️ Built using NextJS, RainbowKit, Foundry, Wagmi, Viem, and Typescript.
+## What is this?
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+**$CLAWDlabs** is the experimental research division of the $CLAWD ecosystem. It's a fully on-chain idea lab where community members can:
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+- 🔬 **Submit Ideas** — Propose a research experiment (costs 10 $CLAWD, burned forever)
+- ⚡ **Stake on Ideas** — Back promising proposals with 25 $CLAWD
+- ✅ **Admin Review** — Ideas can be approved for funding or incinerated
+- 🔥 **Token Burns** — Every submission burns $CLAWD, making the token deflationary
 
-## Requirements
+## How It Works
 
-Before you begin, you need to install the following tools:
+1. **Connect your wallet** on Base network
+2. **Hold $CLAWD tokens** ([`0x9f86dB9fc6f7c9408e8Fda3Ff8ce4e78ac7a6b07`](https://basescan.org/token/0x9f86dB9fc6f7c9408e8Fda3Ff8ce4e78ac7a6b07))
+3. **Submit an idea** — 10 $CLAWD is burned as a submission fee
+4. **Stake on ideas** — Show support by staking 25 $CLAWD on ideas you believe in
+5. **Watch ideas get approved** — Admin reviews and approves/incinerates proposals
 
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+## Contracts
 
-## Quickstart
+| Contract | Address | Network |
+|----------|---------|---------|
+| CLAWDlabs | [`0x85Af18A392E564F68897A0518C191D0831e40a46`](https://basescan.org/address/0x85Af18A392E564F68897A0518C191D0831e40a46) | Base |
+| $CLAWD Token | [`0x9f86dB9fc6f7c9408e8Fda3Ff8ce4e78ac7a6b07`](https://basescan.org/token/0x9f86dB9fc6f7c9408e8Fda3Ff8ce4e78ac7a6b07) | Base |
 
-To get started with Scaffold-ETH 2, follow the steps below:
+## Developer Quickstart
 
-1. Install dependencies if it was skipped in CLI:
-
-```
-cd my-dapp-example
+```bash
+git clone https://github.com/clawdbotatg/idea-labs.git
+cd idea-labs
 yarn install
 ```
 
-2. Run a local network in the first terminal:
-
-```
+Start a local chain:
+```bash
 yarn chain
 ```
 
-This command starts a local Ethereum network using Foundry. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/foundry/foundry.toml`.
-
-3. On a second terminal, deploy the test contract:
-
-```
+Deploy contracts:
+```bash
 yarn deploy
 ```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/foundry/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/foundry/script` to deploy the contract to the network. You can also customize the deploy script.
-
-4. On a third terminal, start your NextJS app:
-
-```
+Start the frontend:
+```bash
 yarn start
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+Visit `http://localhost:3000` to see the app.
 
-Run smart contract test with `yarn foundry:test`
+## Tech Stack
 
-- Edit your smart contracts in `packages/foundry/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/foundry/script`
+Built with [Scaffold-ETH 2](https://scaffoldeth.io):
 
+- ⛓️ **Foundry** — Smart contract development
+- ⚛️ **Next.js** — React frontend
+- 🌈 **RainbowKit** — Wallet connection
+- 🔗 **Wagmi + Viem** — Ethereum interactions
+- 📝 **TypeScript** — Type safety throughout
 
-## Documentation
+## Built By
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
+🤖 Built entirely by **Clawd** — an AI agent living at [BuidlGuidl](https://buidlguidl.com).
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+---
 
-## Contributing to Scaffold-ETH 2
-
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+<p align="center">
+  Built with ♡ at 🏰 <a href="https://buidlguidl.com">BuidlGuidl</a>
+</p>
