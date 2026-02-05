@@ -11,9 +11,10 @@ import { notification } from "~~/utils/scaffold-eth";
 // Admin address
 const ADMIN = "0x11ce532845cE0eAcdA41f72FDc1C88c335981442";
 
-// Costs in CLAWD
-const SUBMIT_COST = parseEther("10");
-const STAKE_COST = parseEther("25");
+// Format CLAWD amounts with commas for readability
+const formatClawdAmount = (amount: bigint): string => {
+  return Number(formatEther(amount)).toLocaleString();
+};
 
 interface Idea {
   id: bigint;
@@ -34,6 +35,17 @@ const Home: NextPage = () => {
   // Get deployed $CLAWDlabs contract address
   const { data: ideaLabsInfo } = useDeployedContractInfo("IdeaLabs");
   const ideaLabsAddress = ideaLabsInfo?.address;
+
+  // Read costs from contract (never hardcode!)
+  const { data: submitCost } = useScaffoldReadContract({
+    contractName: "IdeaLabs",
+    functionName: "SUBMIT_COST",
+  });
+
+  const { data: stakeCost } = useScaffoldReadContract({
+    contractName: "IdeaLabs",
+    functionName: "STAKE_COST",
+  });
 
   // State
   const [ideaContent, setIdeaContent] = useState("");
@@ -83,8 +95,8 @@ const Home: NextPage = () => {
     query: { enabled: !!connectedAddress && !!ideaLabsAddress },
   });
 
-  const hasSubmitAllowance = submitAllowance && submitAllowance >= SUBMIT_COST;
-  const hasStakeAllowance = submitAllowance && submitAllowance >= STAKE_COST;
+  const hasSubmitAllowance = submitAllowance && submitCost && submitAllowance >= submitCost;
+  const hasStakeAllowance = submitAllowance && stakeCost && submitAllowance >= stakeCost;
 
   // Contract writes — use object syntax (non-deprecated) and extract isMining for defense-in-depth
   const { writeContractAsync: writeIdeaLabs, isMining: isIdeaLabsMining } = useScaffoldWriteContract({
@@ -99,12 +111,12 @@ const Home: NextPage = () => {
 
   // Approve CLAWD for submit
   const handleApproveForSubmit = async () => {
-    if (!connectedAddress || !ideaLabsAddress) return;
+    if (!connectedAddress || !ideaLabsAddress || !submitCost) return;
     setIsApprovingSubmit(true);
     try {
       await writeCLAWD({
         functionName: "approve",
-        args: [ideaLabsAddress, SUBMIT_COST],
+        args: [ideaLabsAddress, submitCost],
       });
       notification.success("Approved CLAWD for submission!");
       refetchSubmitAllowance();
@@ -118,12 +130,12 @@ const Home: NextPage = () => {
 
   // Approve CLAWD for stake
   const handleApproveForStake = async (ideaId: number) => {
-    if (!connectedAddress || !ideaLabsAddress) return;
+    if (!connectedAddress || !ideaLabsAddress || !stakeCost) return;
     setApprovingStakeIdeaId(ideaId);
     try {
       await writeCLAWD({
         functionName: "approve",
-        args: [ideaLabsAddress, STAKE_COST],
+        args: [ideaLabsAddress, stakeCost],
       });
       notification.success("Approved CLAWD for staking!");
       refetchSubmitAllowance();
@@ -305,7 +317,7 @@ const Home: NextPage = () => {
                 Specimen Funds Available
               </span>
               <div className="font-mono text-lg font-bold text-primary">
-                {formatEther(clawdBalance)} <span className="text-secondary">$CLAWD</span>
+                {formatClawdAmount(clawdBalance)} <span className="text-secondary">$CLAWD</span>
               </div>
             </div>
           </div>
@@ -329,7 +341,9 @@ const Home: NextPage = () => {
           <div className="p-6 notebook-lines">
             <div className="mb-4 flex items-center gap-4 text-sm">
               <span className="font-mono text-xs uppercase tracking-wider text-base-content/50">Submission Fee:</span>
-              <span className="font-mono font-bold text-secondary">10 $CLAWD</span>
+              <span className="font-mono font-bold text-secondary">
+                {submitCost ? formatClawdAmount(submitCost) : "..."} $CLAWD
+              </span>
               <span className="text-xs text-base-content/40">(burned on submission)</span>
             </div>
 
@@ -351,7 +365,7 @@ const Home: NextPage = () => {
                 <button
                   className="btn btn-secondary"
                   onClick={handleApproveForSubmit}
-                  disabled={isApprovingSubmit || isAnyMining}
+                  disabled={isApprovingSubmit || isAnyMining || !submitCost}
                 >
                   {isApprovingSubmit ? (
                     <>
@@ -359,7 +373,7 @@ const Home: NextPage = () => {
                       Approving...
                     </>
                   ) : (
-                    "🔓 Approve 10 CLAWD"
+                    `🔓 Approve ${submitCost ? formatClawdAmount(submitCost) : "..."} CLAWD`
                   )}
                 </button>
               ) : (
@@ -411,7 +425,8 @@ const Home: NextPage = () => {
             <h2 className="text-2xl font-bold m-0">Active Experiments</h2>
           </div>
           <p className="font-mono text-xs uppercase tracking-wider text-base-content/50">
-            Specimens sorted by total funding • Stake 25 $CLAWD to support research
+            Specimens sorted by total funding • Stake {stakeCost ? formatClawdAmount(stakeCost) : "..."} $CLAWD to
+            support research
           </p>
         </div>
 
@@ -434,6 +449,7 @@ const Home: NextPage = () => {
           setPayoutAmounts={setPayoutAmounts}
           hasStakeAllowance={!!hasStakeAllowance}
           isAnyMining={isAnyMining}
+          stakeCost={stakeCost}
         />
 
         {(!totalIdeas || totalIdeas === 0n) && (
@@ -474,6 +490,7 @@ function IdeasList({
   setPayoutAmounts,
   hasStakeAllowance,
   isAnyMining,
+  stakeCost,
 }: {
   totalIdeas: number;
   connectedAddress: string | undefined;
@@ -492,6 +509,7 @@ function IdeasList({
   setPayoutAmounts: (val: Record<number, string>) => void;
   hasStakeAllowance: boolean;
   isAnyMining: boolean;
+  stakeCost: bigint | undefined;
 }) {
   // Collect sort data from each IdeaCard as it loads
   const [ideaSortData, setIdeaSortData] = useState<
@@ -565,6 +583,7 @@ function IdeasList({
           setPayoutAmount={val => setPayoutAmounts({ ...payoutAmounts, [i]: val })}
           hasStakeAllowance={hasStakeAllowance}
           isAnyMining={isAnyMining}
+          stakeCost={stakeCost}
           onDataLoaded={handleIdeaDataLoaded}
         />
       ))}
@@ -591,6 +610,7 @@ function IdeaCard({
   setPayoutAmount,
   hasStakeAllowance,
   isAnyMining,
+  stakeCost,
   onDataLoaded,
 }: {
   ideaId: number;
@@ -610,6 +630,7 @@ function IdeaCard({
   setPayoutAmount: (val: string) => void;
   hasStakeAllowance: boolean;
   isAnyMining: boolean;
+  stakeCost: bigint | undefined;
   onDataLoaded?: (id: number, data: { totalStaked: bigint; isBurned: boolean; isBuilt: boolean }) => void;
 }) {
   // Read idea data
@@ -711,7 +732,7 @@ function IdeaCard({
                 Total Funding
               </span>
               <span className="font-mono text-lg font-bold text-primary">
-                {formatEther(idea.totalStaked)} <span className="text-xs text-secondary">$CLAWD</span>
+                {formatClawdAmount(idea.totalStaked)} <span className="text-xs text-secondary">$CLAWD</span>
               </span>
             </div>
             <div className="text-right">
@@ -742,7 +763,7 @@ function IdeaCard({
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => onApproveStake(ideaId)}
-                disabled={isApprovingStake || isAnyMining}
+                disabled={isApprovingStake || isAnyMining || !stakeCost}
               >
                 {isApprovingStake || isAnyMining ? (
                   <>
@@ -750,7 +771,7 @@ function IdeaCard({
                     {isApprovingStake ? "Approving..." : "Processing..."}
                   </>
                 ) : (
-                  "🔓 Approve 25 CLAWD"
+                  `🔓 Approve ${stakeCost ? formatClawdAmount(stakeCost) : "..."} CLAWD`
                 )}
               </button>
             ) : (
@@ -765,7 +786,7 @@ function IdeaCard({
                     {isStaking ? "Funding..." : "Processing..."}
                   </>
                 ) : (
-                  "💰 Fund Research (25 CLAWD)"
+                  `💰 Fund Research (${stakeCost ? formatClawdAmount(stakeCost) : "..."} CLAWD)`
                 )}
               </button>
             ))}
@@ -790,7 +811,7 @@ function IdeaCard({
                   {isClaiming ? "Claiming..." : "Processing..."}
                 </>
               ) : (
-                `🎁 Claim ${claimableAmount ? formatEther(claimableAmount) : "0"} CLAWD`
+                `🎁 Claim ${claimableAmount ? formatClawdAmount(claimableAmount) : "0"} CLAWD`
               )}
             </button>
           )}
