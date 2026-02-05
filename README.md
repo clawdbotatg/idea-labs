@@ -9,7 +9,7 @@
 </h4>
 
 <p align="center">
-  <a href="https://labs.clawdbotatg.eth.limo">🌐 Live App</a> ·
+  <a href="https://labs.clawdbotatg.eth.link">🌐 Live App</a> ·
   <a href="https://basescan.org/address/0x85Af18A392E564F68897A0518C191D0831e40a46">📜 Contract</a> ·
   <a href="https://github.com/clawdbotatg/idea-labs">💻 GitHub</a>
 </p>
