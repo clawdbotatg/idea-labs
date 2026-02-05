@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MutateOptions } from "@tanstack/react-query";
 import { Abi, ExtractAbiFunctionNames } from "abitype";
-import { Config, UseWriteContractParameters, useAccount, useConfig, useWriteContract } from "wagmi";
+import { Config, UseWriteContractParameters, useAccount, useConfig, useSwitchChain, useWriteContract } from "wagmi";
 import { WriteContractErrorType, WriteContractReturnType } from "wagmi/actions";
 import { WriteContractVariables } from "wagmi/query";
 import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
@@ -73,6 +73,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
 
   const { chain: accountChain } = useAccount();
   const writeTx = useTransactor();
+  const { switchChainAsync } = useSwitchChain();
   const [isMining, setIsMining] = useState(false);
 
   const wagmiContractWrite = useWriteContract(finalWriteContractParams);
@@ -101,8 +102,13 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     }
 
     if (accountChain?.id !== selectedNetwork.id) {
-      notification.error(`Wallet is connected to the wrong network. Please switch to ${selectedNetwork.name}`);
-      return;
+      try {
+        notification.loading(`Switching to ${selectedNetwork.name}...`);
+        await switchChainAsync({ chainId: selectedNetwork.id });
+      } catch {
+        notification.error(`Failed to switch to ${selectedNetwork.name}. Please switch manually.`);
+        return;
+      }
     }
 
     try {
@@ -145,7 +151,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     }
   };
 
-  const sendContractWriteTx = <
+  const sendContractWriteTx = async <
     TContractName extends ContractName,
     TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "nonpayable" | "payable">,
   >(
@@ -162,8 +168,13 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     }
 
     if (accountChain?.id !== selectedNetwork.id) {
-      notification.error(`Wallet is connected to the wrong network. Please switch to ${selectedNetwork.name}`);
-      return;
+      try {
+        notification.loading(`Switching to ${selectedNetwork.name}...`);
+        await switchChainAsync({ chainId: selectedNetwork.id });
+      } catch {
+        notification.error(`Failed to switch to ${selectedNetwork.name}. Please switch manually.`);
+        return;
+      }
     }
 
     wagmiContractWrite.writeContract(
