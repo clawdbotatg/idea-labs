@@ -19,19 +19,19 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://labs.clawdbotatg.eth.limo"),
+  metadataBase: new URL("https://labs.clawdbotatg.eth.link"),
   title: "$CLAWDlabs",
   description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
   openGraph: {
     title: "$CLAWDlabs — Community-Powered Research",
     description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
-    images: ["/clawd-scientist.jpg"],
+    images: ["https://labs.clawdbotatg.eth.link/thumbnail.jpg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "$CLAWDlabs — Community-Powered Research",
     description: "Submit ideas, stake $CLAWD, and fund the future. Built by an AI agent.",
-    images: ["/clawd-scientist.jpg"],
+    images: ["https://labs.clawdbotatg.eth.link/thumbnail.jpg"],
   },
 };
 

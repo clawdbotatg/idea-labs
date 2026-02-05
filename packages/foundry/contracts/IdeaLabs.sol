@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title IdeaLabs
- * @notice Submit ideas (burn $10 CLAWD), stake on ideas ($25 CLAWD), 
+ * @notice Submit ideas (burn 615,000 CLAWD ≈ $50), stake on ideas (308,000 CLAWD ≈ $25), 
  *         admin can mark as built (with payout) or burn offensive content.
  */
 contract IdeaLabs is ReentrancyGuard {
@@ -21,8 +21,8 @@ contract IdeaLabs is ReentrancyGuard {
     address public immutable admin;
     address public constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     
-    uint256 public constant SUBMIT_COST = 10 * 10**18;  // 10 CLAWD (~$10)
-    uint256 public constant STAKE_COST = 25 * 10**18;   // 25 CLAWD (~$25)
+    uint256 public constant SUBMIT_COST = 615000 * 10**18;  // 615,000 CLAWD (~$50)
+    uint256 public constant STAKE_COST = 308000 * 10**18;  // 308,000 CLAWD (~$25)
 
     // =============================================================
     //                           STORAGE

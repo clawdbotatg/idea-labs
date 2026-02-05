@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   8453: {
     IdeaLabs: {
-      address: "0x85af18a392e564f68897a0518c191d0831e40a46",
+      address: "0xa51fe0491292fbad5caa23f674cd59c1480ec60a",
       abi: [
         {
           type: "constructor",
@@ -626,7 +626,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 41712497,
+      deployedOnBlock: 41732537,
     },
   },
   31337: {
